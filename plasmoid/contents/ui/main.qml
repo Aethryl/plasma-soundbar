@@ -186,6 +186,19 @@ PlasmoidItem {
                 }
             }
         }
+        Repeater {
+            model: wave.played > 1 ? [0, wave.played] : []
+            Rectangle {
+                required property real modelData
+                readonly property real size: Math.round(wave.stroke * 2.6 * wave.dpr) / wave.dpr
+                x: modelData - size / 2
+                y: wave.mid - size / 2
+                width: size
+                height: size
+                radius: size / 2
+                color: root.accent
+            }
+        }
         Rectangle {
             visible: wave.interactive && (seekArea.containsMouse || seekArea.pressed)
             x: wave.played - width / 2
