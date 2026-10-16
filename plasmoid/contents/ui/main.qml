@@ -132,6 +132,129 @@ PlasmoidItem {
         }
     }
 
+    component Wave: Item {
+        id: wave
+        property real fraction: 0
+        property bool running: true
+        property real stroke: hair * 1.5
+        property real wavelength: 3.2
+        property bool interactive: false
+        property real dragFraction: -1
+        signal seek(real fraction)
+        readonly property real dpr: Screen.devicePixelRatio || 1
+        readonly property real hair: Math.max(1, Math.round(dpr)) / dpr
+        readonly property real shown: dragFraction >= 0 ? dragFraction : fraction
+        readonly property real mid: Math.round(height / 2 * dpr) / dpr
+        readonly property real played: Math.round(width * Math.min(1, Math.max(0, shown)))
+        property real phase: 0
+        property real amplitude: root.playing ? (height - stroke) / 2 : 0
+        Behavior on amplitude { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+        NumberAnimation on phase {
+            running: root.playing && wave.running && wave.visible && Kirigami.Units.longDuration > 0
+            from: 0
+            to: Math.PI * 2
+            duration: 1400
+            loops: Animation.Infinite
+        }
+        Rectangle {
+            x: wave.played
+            y: wave.mid - wave.hair / 2
+            width: Math.max(0, wave.width - wave.played)
+            height: wave.hair
+            color: Qt.alpha(Kirigami.Theme.textColor, 0.18)
+        }
+        Shape {
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
+            visible: wave.played > 1
+            ShapePath {
+                strokeColor: root.accent
+                strokeWidth: wave.stroke
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathPolyline {
+                    path: {
+                        const points = []
+                        const end = wave.played
+                        for (let x = 0; x <= end; x += 1) {
+                            const fade = Math.min(1, x / (wave.wavelength * 3), (end - x) / (wave.wavelength * 2))
+                            points.push(Qt.point(x, wave.mid - Math.sin(x / wave.wavelength - wave.phase) * wave.amplitude * fade))
+                        }
+                        return points
+                    }
+                }
+            }
+        }
+        Rectangle {
+            visible: wave.interactive && (seekArea.containsMouse || seekArea.pressed)
+            x: wave.played - width / 2
+            y: wave.mid - height / 2
+            width: wave.stroke * 3
+            height: wave.height * 0.9
+            radius: width / 2
+            color: root.accent
+        }
+        MouseArea {
+            id: seekArea
+            anchors.fill: parent
+            anchors.topMargin: -Kirigami.Units.smallSpacing * 2
+            anchors.bottomMargin: -Kirigami.Units.smallSpacing * 2
+            enabled: wave.interactive
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            function at(x) { return Math.min(1, Math.max(0, x / wave.width)) }
+            onPressed: mouse => wave.dragFraction = at(mouse.x)
+            onPositionChanged: mouse => { if (pressed) wave.dragFraction = at(mouse.x) }
+            onReleased: mouse => {
+                wave.seek(at(mouse.x))
+                wave.dragFraction = -1
+            }
+        }
+    }
+
+    component Line: Item {
+        id: line
+        property real fraction: 0
+        signal moved(real fraction)
+        readonly property real dpr: Screen.devicePixelRatio || 1
+        readonly property real hair: Math.max(1, Math.round(dpr)) / dpr
+        implicitHeight: Kirigami.Units.gridUnit
+        Rectangle {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            height: line.hair
+            color: Qt.alpha(Kirigami.Theme.textColor, 0.18)
+        }
+        Rectangle {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width * Math.min(1, Math.max(0, line.fraction))
+            height: line.hair * 2
+            radius: height / 2
+            color: Kirigami.Theme.textColor
+            opacity: 0.75
+        }
+        Rectangle {
+            visible: lineArea.containsMouse || lineArea.pressed
+            anchors.verticalCenter: parent.verticalCenter
+            x: parent.width * line.fraction - width / 2
+            width: line.hair * 5
+            height: Kirigami.Units.gridUnit * 0.6
+            radius: width / 2
+            color: Kirigami.Theme.textColor
+        }
+        MouseArea {
+            id: lineArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            function at(x) { return Math.min(1, Math.max(0, x / width)) }
+            onPressed: mouse => line.moved(at(mouse.x))
+            onPositionChanged: mouse => { if (pressed) line.moved(at(mouse.x)) }
+            onWheel: wheel => line.moved(Math.min(1, Math.max(0, line.fraction + (wheel.angleDelta.y > 0 ? 0.05 : -0.05))))
+        }
+    }
+
     component Cover: Item {
         id: cover
         property real radius: Kirigami.Units.cornerRadius
@@ -228,12 +351,23 @@ PlasmoidItem {
                 }
                 readonly property real dpr: Screen.devicePixelRatio || 1
                 readonly property real hair: Math.max(1, Math.round(dpr)) / dpr
-                readonly property real gap: Kirigami.Units.smallSpacing * 0.75
+                readonly property real capHeight: -capMeasure.tightBoundingRect.y
+                readonly property real glyphTop: fontMetrics.ascent - capHeight
+                readonly property real gap: Math.ceil(fontMetrics.descent) + hair * 2
                 readonly property real waveHeight: Kirigami.Units.smallSpacing * 1.25
-                readonly property real stackTop: Math.round(((height - ticker.height - gap - waveHeight) / 2 - hair * 2) * lane.dpr) / lane.dpr
+                readonly property real stackTop: Math.round(((height - capHeight - gap - waveHeight) / 2 - hair) * lane.dpr) / lane.dpr
+                FontMetrics {
+                    id: fontMetrics
+                    font: label.font
+                }
+                TextMetrics {
+                    id: capMeasure
+                    font: label.font
+                    text: "H"
+                }
                 Item {
                     id: ticker
-                    y: lane.stackTop
+                    y: lane.stackTop - lane.glyphTop
                     width: lane.width
                     height: Math.ceil(label.contentHeight)
                     clip: true
@@ -241,7 +375,7 @@ PlasmoidItem {
                     id: label
                     topPadding: 0
                     bottomPadding: 0
-                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 0.88
+                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 0.85
                     text: lane.scrolls ? root.title + "     ·     " + root.title + "     ·     " : root.title
                     color: root.playing ? Kirigami.Theme.textColor : root.dim
                     property real shift: 0
@@ -255,54 +389,12 @@ PlasmoidItem {
                     }
                 }
                 }
-                Item {
-                    id: wave
-                    x: 0
-                    y: ticker.y + ticker.height + lane.gap
+                Wave {
+                    y: lane.stackTop + lane.capHeight + lane.gap
                     width: lane.width
                     height: lane.waveHeight
-                    readonly property real mid: Math.round(height / 2 * lane.dpr) / lane.dpr
-                    readonly property real played: Math.round(width * root.progress)
-                    property real phase: 0
-                    property real amplitude: root.playing ? height / 2 - lane.hair : 0
-                    Behavior on amplitude { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
-                    NumberAnimation on phase {
-                        running: root.playing && compact.marquee && Kirigami.Units.longDuration > 0
-                        from: 0
-                        to: Math.PI * 2
-                        duration: 1400
-                        loops: Animation.Infinite
-                    }
-                    Rectangle {
-                        x: wave.played
-                        y: wave.mid - lane.hair / 2
-                        width: Math.max(0, wave.width - wave.played)
-                        height: lane.hair
-                        color: Qt.alpha(Kirigami.Theme.textColor, 0.18)
-                    }
-                    Shape {
-                        anchors.fill: parent
-                        preferredRendererType: Shape.CurveRenderer
-                        visible: wave.played > 1
-                        ShapePath {
-                            strokeColor: root.accent
-                            strokeWidth: lane.hair * 1.5
-                            fillColor: "transparent"
-                            capStyle: ShapePath.RoundCap
-                            joinStyle: ShapePath.RoundJoin
-                            PathPolyline {
-                                path: {
-                                    const points = []
-                                    const end = wave.played
-                                    for (let x = 0; x <= end; x += 1) {
-                                        const fade = Math.min(1, (end - x) / 6)
-                                        points.push(Qt.point(x, wave.mid - Math.sin(x / 3.2 - wave.phase) * wave.amplitude * fade))
-                                    }
-                                    return points
-                                }
-                            }
-                        }
-                    }
+                    fraction: root.progress
+                    running: compact.marquee
                 }
             }
         }
@@ -471,19 +563,21 @@ PlasmoidItem {
                         visible: root.length > 0
                         spacing: Kirigami.Units.smallSpacing * 2
                         PlasmaComponents.Label {
-                            text: root.clock(seek.pressed ? seek.value : root.position)
+                            text: root.clock(seek.dragFraction >= 0 ? seek.dragFraction * root.length : root.position)
                             color: root.dim
                             font.family: "monospace"
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
                         }
-                        PlasmaComponents.Slider {
+                        Wave {
                             id: seek
                             Layout.fillWidth: true
-                            from: 0
-                            to: root.length
-                            enabled: !!root.player && root.player.canSeek
-                            value: pressed ? value : root.position
-                            onPressedChanged: if (!pressed && root.player) root.player.position = value
+                            Layout.preferredHeight: Kirigami.Units.smallSpacing * 3
+                            fraction: root.progress
+                            stroke: hair * 2.5
+                            wavelength: 4.5
+                            running: notch.progress > 0
+                            interactive: !!root.player && root.player.canSeek
+                            onSeek: fraction => { if (root.player) root.player.position = fraction * root.length }
                         }
                         PlasmaComponents.Label {
                             text: root.clock(root.length)
@@ -526,12 +620,10 @@ PlasmoidItem {
                             color: root.dim
                             isMask: true
                         }
-                        PlasmaComponents.Slider {
+                        Line {
                             Layout.fillWidth: true
-                            from: 0
-                            to: 1
-                            value: root.player ? root.player.volume : 0
-                            onMoved: if (root.player) root.player.volume = value
+                            fraction: root.player ? root.player.volume : 0
+                            onMoved: fraction => { if (root.player) root.player.volume = fraction }
                         }
                     }
 
