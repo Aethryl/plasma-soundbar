@@ -220,16 +220,28 @@ PlasmoidItem {
                 id: lane
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                clip: true
                 readonly property bool scrolls: measure.width > width
                 TextMetrics {
                     id: measure
                     font: label.font
                     text: root.title
                 }
+                readonly property real dpr: Screen.devicePixelRatio || 1
+                readonly property real hair: Math.max(1, Math.round(dpr)) / dpr
+                readonly property real gap: Kirigami.Units.smallSpacing * 0.75
+                readonly property real waveHeight: Kirigami.Units.smallSpacing * 1.25
+                readonly property real stackTop: Math.round(((height - ticker.height - gap - waveHeight) / 2 - hair * 2) * lane.dpr) / lane.dpr
+                Item {
+                    id: ticker
+                    y: lane.stackTop
+                    width: lane.width
+                    height: Math.ceil(label.contentHeight)
+                    clip: true
                 PlasmaComponents.Label {
                     id: label
-                    anchors.verticalCenter: parent.verticalCenter
+                    topPadding: 0
+                    bottomPadding: 0
+                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 0.88
                     text: lane.scrolls ? root.title + "     ·     " + root.title + "     ·     " : root.title
                     color: root.playing ? Kirigami.Theme.textColor : root.dim
                     property real shift: 0
@@ -242,17 +254,54 @@ PlasmoidItem {
                         loops: Animation.Infinite
                     }
                 }
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: Kirigami.Units.smallSpacing / 2
-                    height: Math.max(1, Math.round(Screen.devicePixelRatio)) / Screen.devicePixelRatio * 1.5
-                    width: parent.width
-                    color: Qt.alpha(Kirigami.Theme.textColor, 0.12)
+                }
+                Item {
+                    id: wave
+                    x: 0
+                    y: ticker.y + ticker.height + lane.gap
+                    width: lane.width
+                    height: lane.waveHeight
+                    readonly property real mid: Math.round(height / 2 * lane.dpr) / lane.dpr
+                    readonly property real played: Math.round(width * root.progress)
+                    property real phase: 0
+                    property real amplitude: root.playing ? height / 2 - lane.hair : 0
+                    Behavior on amplitude { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                    NumberAnimation on phase {
+                        running: root.playing && compact.marquee && Kirigami.Units.longDuration > 0
+                        from: 0
+                        to: Math.PI * 2
+                        duration: 1400
+                        loops: Animation.Infinite
+                    }
                     Rectangle {
-                        height: parent.height
-                        width: parent.width * root.progress
-                        color: root.accent
+                        x: wave.played
+                        y: wave.mid - lane.hair / 2
+                        width: Math.max(0, wave.width - wave.played)
+                        height: lane.hair
+                        color: Qt.alpha(Kirigami.Theme.textColor, 0.18)
+                    }
+                    Shape {
+                        anchors.fill: parent
+                        preferredRendererType: Shape.CurveRenderer
+                        visible: wave.played > 1
+                        ShapePath {
+                            strokeColor: root.accent
+                            strokeWidth: lane.hair * 1.5
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+                            joinStyle: ShapePath.RoundJoin
+                            PathPolyline {
+                                path: {
+                                    const points = []
+                                    const end = wave.played
+                                    for (let x = 0; x <= end; x += 1) {
+                                        const fade = Math.min(1, (end - x) / 6)
+                                        points.push(Qt.point(x, wave.mid - Math.sin(x / 3.2 - wave.phase) * wave.amplitude * fade))
+                                    }
+                                    return points
+                                }
+                            }
+                        }
                     }
                 }
             }
