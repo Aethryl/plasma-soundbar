@@ -90,7 +90,7 @@ PlasmoidItem {
         readonly property real dpr: Screen.devicePixelRatio || 1
         readonly property real cell: Math.max(2, Math.round(Kirigami.Units.gridUnit * 0.2 * dpr)) / dpr
         readonly property real gap: Math.max(1, Math.round(dpr)) / dpr
-        readonly property int rows: 5
+        property int rows: 5
         property var heights: []
         implicitWidth: columns * cell + (columns - 1) * gap
         implicitHeight: rows * cell + (rows - 1) * gap
@@ -124,7 +124,10 @@ PlasmoidItem {
                             required property int index
                             width: eq.cell
                             height: eq.cell
-                            color: eq.rows - index <= (eq.heights[parent.index] || 1) ? root.accent : Qt.alpha(root.accent, 0.18)
+                            color: eq.rows - index <= (eq.heights[parent.index] || 1)
+                                ? (eq.live ? root.accent : Qt.alpha(root.accent, 0.6))
+                                : Qt.alpha(root.accent, eq.live ? 0.18 : 0)
+                            Behavior on color { ColorAnimation { duration: Kirigami.Units.longDuration } }
                         }
                     }
                 }
@@ -431,6 +434,13 @@ PlasmoidItem {
             anchors.centerIn: parent
             visible: root.collapsed
             columns: 3
+            rows: 1
+            SequentialAnimation on opacity {
+                running: collapsedEq.visible && Kirigami.Units.longDuration > 0
+                loops: Animation.Infinite
+                NumberAnimation { to: 0.35; duration: 1800; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 1; duration: 1800; easing.type: Easing.InOutSine }
+            }
         }
     }
 
