@@ -137,7 +137,7 @@ PlasmoidItem {
         property real fraction: 0
         property bool running: true
         property real stroke: hair * 1.5
-        property real wavelength: 3.2
+        property real wavelength: 5
         property bool interactive: false
         property real dragFraction: -1
         signal seek(real fraction)
@@ -587,7 +587,7 @@ PlasmoidItem {
                             Layout.preferredHeight: Kirigami.Units.smallSpacing * 3
                             fraction: root.progress
                             stroke: hair * 2.5
-                            wavelength: 4.5
+                            wavelength: 7
                             running: notch.progress > 0
                             interactive: !!root.player && root.player.canSeek
                             onSeek: fraction => { if (root.player) root.player.position = fraction * root.length }
