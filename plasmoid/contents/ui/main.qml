@@ -137,7 +137,7 @@ PlasmoidItem {
         property real fraction: 0
         property bool running: true
         property real stroke: hair * 1.5
-        property real wavelength: 5
+        property real wavelength: 5.5
         property bool interactive: false
         property real dragFraction: -1
         signal seek(real fraction)
@@ -153,7 +153,7 @@ PlasmoidItem {
             running: root.playing && wave.running && wave.visible && Kirigami.Units.longDuration > 0
             from: 0
             to: Math.PI * 2
-            duration: 1400
+            duration: 2400
             loops: Animation.Infinite
         }
         Rectangle {
