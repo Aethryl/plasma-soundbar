@@ -187,7 +187,7 @@ PlasmoidItem {
             }
         }
         Repeater {
-            model: wave.played > 1 ? [0, wave.played] : []
+            model: wave.played > 1 ? [0] : []
             Rectangle {
                 required property real modelData
                 readonly property real size: Math.round(wave.stroke * 2.6 * wave.dpr) / wave.dpr
