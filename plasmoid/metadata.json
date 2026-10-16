@@ -1,0 +1,14 @@
+{
+    "KPlugin": {
+        "Authors": [{ "Name": "Fabian" }],
+        "Category": "Multimedia",
+        "Description": "Now playing: cover and scrolling title or a block equalizer, with a notch for controls",
+        "Icon": "media-playback-start",
+        "Id": "io.github.aethryl.soundbar",
+        "License": "MIT",
+        "Name": "Soundbar",
+        "Version": "0.1"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
