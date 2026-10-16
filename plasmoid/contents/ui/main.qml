@@ -180,9 +180,13 @@ PlasmoidItem {
         readonly property real fullWidth: (Plasmoid.configuration.showCover ? cover.width + row.spacing : 0) + marqueeSpan
         readonly property real eqWidth: eqRow.implicitWidth
         readonly property string style: Plasmoid.configuration.style
-        readonly property bool marquee: !root.collapsed && (style === "marquee" || (style === "auto" && width >= fullWidth - 1))
-        Layout.minimumWidth: root.present ? (root.collapsed ? collapsedEq.implicitWidth : eqWidth) : 0
-        Layout.preferredWidth: root.present ? (root.collapsed ? collapsedEq.implicitWidth : style === "equalizer" ? eqWidth : fullWidth) : 0
+        readonly property real padMax: Kirigami.Units.gridUnit * 1.5
+        readonly property real padMin: Kirigami.Units.smallSpacing
+        readonly property real content: root.collapsed ? collapsedEq.implicitWidth : marquee ? fullWidth : eqWidth
+        readonly property real pad: Math.max(padMin, Math.min(padMax, (width - content) / 2))
+        readonly property bool marquee: !root.collapsed && (style === "marquee" || (style === "auto" && width >= fullWidth + padMin * 2 - 1))
+        Layout.minimumWidth: root.present ? (root.collapsed ? collapsedEq.implicitWidth : eqWidth) + padMin * 2 : 0
+        Layout.preferredWidth: root.present ? (root.collapsed ? collapsedEq.implicitWidth : style === "equalizer" ? eqWidth : fullWidth) + padMax * 2 : 0
         Layout.maximumWidth: Layout.preferredWidth
         Layout.fillWidth: style === "auto" && !root.collapsed
         visible: root.present
@@ -201,6 +205,8 @@ PlasmoidItem {
         RowLayout {
             id: row
             anchors.fill: parent
+            anchors.leftMargin: compact.pad
+            anchors.rightMargin: compact.pad
             visible: compact.marquee
             spacing: Kirigami.Units.smallSpacing * 1.5
             Cover {

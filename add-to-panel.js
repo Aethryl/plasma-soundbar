@@ -5,7 +5,7 @@ if (panel.widgets("io.github.aethryl.soundbar").length === 0) {
     var added = panel.addWidget("io.github.aethryl.soundbar");
     order = order.filter(function (id) { return id !== String(added.id); });
     var mural = panel.widgets("io.github.aethryl.mural")[0];
-    var at = mural ? order.indexOf(String(mural.id)) + 1 : order.length;
+    var at = mural ? order.indexOf(String(mural.id)) : order.length;
     order.splice(at, 0, String(added.id));
     panel.currentConfigGroup = ["General"];
     panel.writeConfig("AppletOrder", order.join(";"));
