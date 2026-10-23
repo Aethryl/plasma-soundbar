@@ -43,7 +43,7 @@ PlasmoidItem {
     activationTogglesExpanded: false
     fullRepresentation: Item {}
     Plasmoid.backgroundHints: "NoBackground"
-    Plasmoid.status: present ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.PassiveStatus
+    Plasmoid.status: present ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.HiddenStatus
     toolTipMainText: ""
     toolTipSubText: ""
 
@@ -329,6 +329,7 @@ PlasmoidItem {
         Layout.maximumWidth: Layout.preferredWidth
         Layout.fillWidth: style === "auto" && !root.collapsed
         visible: root.present
+        clip: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
         hoverEnabled: true
         Component.onCompleted: root.compactItem = compact
