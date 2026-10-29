@@ -467,12 +467,21 @@ PlasmoidItem {
         onFinished: if (!root.drooped) droop.visible = false
     }
 
+    Image {
+        id: coverArt
+        width: 64
+        height: 64
+        opacity: 0
+        asynchronous: true
+        source: root.artUrl
+        sourceSize: Qt.size(64, 64)
+        onStatusChanged: if (status === Image.Ready) coverColors.update()
+    }
+
     Kirigami.ImageColors {
         id: coverColors
-        source: root.artUrl
-        Component.onCompleted: update()
+        source: coverArt
     }
-    onArtUrlChanged: coverColors.update()
 
     PlasmaCore.Dialog {
         id: droop
