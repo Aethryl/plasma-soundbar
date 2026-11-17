@@ -1,6 +1,6 @@
 {
     "KPlugin": {
-        "Authors": [{ "Name": "Fabian" }],
+        "Authors": [{ "Name": "Aethryl" }],
         "Category": "Multimedia",
         "Description": "Now playing: cover and scrolling title or a block equalizer, with a notch for controls",
         "Icon": "media-playback-start",
